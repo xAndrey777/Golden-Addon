@@ -1,47 +1,60 @@
+package com.example.addon.modules;
+
+import meteordevelopment.meteorclient.events.world.TickEvent;
+import meteordevelopment.meteorclient.settings.*;
+import meteordevelopment.meteorclient.systems.modules.Categories;
+import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.orbit.EventHandler;
+import net.minecraft.util.math.Vec3d;
+
 public class FlightPlus extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
 
-    // Ajuste de velocidad (Decimal)
+    // Configuraciones
     private final Setting<Double> speed = sgGeneral.add(new DoubleSetting.Builder()
         .name("velocidad")
-        .description("Qué tan rápido vuelas.")
+        .description("Velocidad del vuelo.")
         .defaultValue(0.5)
         .min(0.1)
-        .max(5.0)
         .build()
     );
 
-    // Ajuste de Anti-Kick (On/Off)
     private final Setting<Boolean> antiKick = sgGeneral.add(new BoolSetting.Builder()
         .name("anti-kick")
-        .description("Baja un poco cada segundo para evitar que el server te eche.")
+        .description("Pequeño descenso para evitar el kick del servidor.")
         .defaultValue(true)
         .build()
     );
 
     public FlightPlus() {
-        super(Categories.Movement, "fly-plus", "Vuelo personalizable.");
+        super(Categories.Movement, "fly-plus", "Vuelo con bypass de gravedad mejorado.");
     }
 
     @EventHandler
     private void onTick(TickEvent.Pre event) {
+        // Detenemos el vuelo original de Minecraft para controlar nosotros la velocidad
         mc.player.getAbilities().flying = false;
-        mc.player.setVelocity(0, 0, 0);
-
+        
+        // Ponemos la velocidad actual en 0 para que no caiga
+        Vec3d vel = mc.player.getVelocity();
         double y = 0;
 
+        // Controles de subir y bajar
         if (mc.options.jumpKey.isPressed()) y = speed.get();
-        if (mc.options.sneakKey.isPressed()) y = -speed.get();
+        else if (mc.options.sneakKey.isPressed()) y = -speed.get();
         
-        // Aplicar Anti-Kick solo si está activado
+        // Lógica de Anti-Kick: baja un poquito cada 20 ticks (1 segundo)
         if (antiKick.get() && mc.player.age % 20 == 0) {
             y -= 0.05;
         }
 
-        mc.player.setVelocity(0, y, 0);
-        
-        // Movimiento horizontal (opcional para completar el fly)
-        Vec3d move = mc.player.getRotationVector().multiply(speed.get());
-        // Aquí podrías añadir lógica de movimiento X y Z
+        // Aplicamos la nueva velocidad
+        mc.player.setVelocity(vel.x, y, vel.z);
+    }
+
+    @Override
+    public void onDeactivate() {
+        // Al apagar el módulo, detenemos al jugador para que no salga disparado
+        mc.player.setVelocity(0, 0, 0);
     }
 }
