@@ -14,25 +14,23 @@ public class InstaminePlus extends Module {
 
     @EventHandler
     private void onStartBreaking(StartBreakingBlockEvent event) {
-        // Usamos la posición del bloque que el evento ya nos da
         if (event.blockPos == null || mc.player == null) return;
 
         Direction dir = Direction.UP;
 
-        // Enviamos los paquetes directamente al networkHandler
-        mc.player.networkHandler.sendPacket(new PlayerActionC2SPacket(
-            PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, 
+        // Usamos la referencia completa para evitar errores de importación
+        mc.player.networkHandler.sendPacket(new net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket(
+            net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, 
             event.blockPos, 
             dir
         ));
         
-        mc.player.networkHandler.sendPacket(new PlayerActionC2SPacket(
-            PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, 
+        mc.player.networkHandler.sendPacket(new net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket(
+            net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, 
             event.blockPos, 
             dir
         ));
 
-        // Cancelamos el evento original para que no haya delay
         event.cancel();
     }
 }
